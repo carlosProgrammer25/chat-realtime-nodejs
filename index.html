@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+
+    <style>
+      /*CSS*/
+
+      body { margin: 0; padding-bottom: 3rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+      #form { background: rgba(0, 0, 0, 0.15); padding: 0.25rem; position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 3rem; box-sizing: border-box; backdrop-filter: blur(10px); }
+
+      #input { border: none; padding: 0 1rem; flex-grow: 1; border-radius: 2rem; margin: 0.25rem; }
+
+      #input:focus { outline: none; }
+
+      #form > button { background: #333; border: none; padding: 0 1rem; margin: 0.25rem; border-radius: 3px; outline: none; color: #fff; }
+
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+
+      #messages > li { padding: 0.5rem 1rem; }
+
+      #messages > li{
+        background-color: white;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!--ELEMENTOS HTML-->
+    <ul id="messages"></ul>
+
+    <form id="form" action="">
+      <input id="input" autocomplete="off" /><button>Enviar</button>
+    </form>
+
+    <!--carrega a biblioteca-->
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script>
+      //CODIGO JS LADO CLIENTE
+
+        //Um socket é um ponto de comunicação entre dois dispositivos em uma rede
+        //Socket.IO é uma biblioteca JavaScript para comunicação em tempo real entre cliente e servidor
+
+        //Permite troca de dados em tempo real entre dois processos através da rede
+        var socket = io();
+        var nome = prompt('Qual seu nome?');
+        //enviando um evento para o servidor -> (evento, dados)
+        socket.emit('Novo Usuario',nome);
+
+        //socket.on resposta do servidor que será enviada para cliente
+        //se existir um respota do servidor com evento nome -> Novo Usuario Retornado
+        socket.on('Novo Usuario Retornado',function(data){
+            //"Quando o servidor enviar um evento chamado 'Novo usuario', execute essa função.
+            if(data.success){
+              alert('Bem-vindo ao Danki Chat '+nome);
+            }else{
+                alert('Já existe usuário com este nome....');
+                window.location.href= "/";
+            };
+        });
+
+        //DOM
+        var messages = document.getElementById('messages');
+        var form = document.getElementById('form');
+        var input = document.getElementById('input');
+
+        //Escuta o evento submit do for e executa a função quando ele acontecer
+        form.addEventListener('submit',(e)=>{
+            e.preventDefault();
+            if(input.value){
+                //enviando evento para o servidor -> valor do input form e nome do usuario
+                socket.emit('chat message',{msg:input.value,nome:nome});
+                //limpando valor do input
+                input.value = '';
+            };
+        });
+
+
+        //Quando chegar um evento chamado 'chat message', execute essa função
+        //onde a mensagem do usuario sera exibida na tela
+        socket.on('chat message',function(obj){
+            //se o valor do campo obj.nome for igual ao nome do usuario
+            if(obj.nome == nome){
+              //a mensagem com uma cor
+
+              //criando elemento li no html
+              var item = document.createElement('li');
+              //aplica estilo no elemento selecionado
+              //concatenando nome usuario + mensagem
+              item.style.backgroundColor = 'gray';
+              item.textContent = obj.nome+' Disse: '+obj.msg;
+              //Adicionar o elemento (li)dentro do elemento messages(ul)
+              messages.appendChild(item);
+              //window -> Objeto da janela do navegador.
+              //x -> posição horizontal
+              //y -> posição vertical
+              window.scrollTo(0, document.body.scrollHeight);
+            }else{
+              //outra cor
+              var item = document.createElement('li');
+              item.textContent =obj.nome+' disse: '+obj.msg;
+              //apeendchild
+              messages.appendChild(item);
+              window.scrollTo(0, document.body.scrollHeight);
+            };
+        });
+    </script>
+  </body>
+</html>
